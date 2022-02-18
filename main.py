@@ -8,7 +8,7 @@ pygame.init()
 pygame.mixer.init()
 
 s_width = 750
-s_height = 900  # 1010
+s_height = 800  # 1010
 screen = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption("BREAKOUT")
 
@@ -39,53 +39,98 @@ wall_width = 16
 p_height = 48
 p_width = 15
 
+#paddle colours
+color = (0, 100, 255)
 
-class Ball(pygame.sprite.Sprite):
-    def __init__(self, color, width, height):
-        super().__init__()
-        self.image = pygame.Surface([width, height])
-        pygame.draw.rect(self.image, color, [0, 0, width, height])
-        self.rect = self.image.get_rect()
-        self.velocity = [velocity, velocity]
-
-    def update(self):
-        self.rect.x += self.velocity[0]
-        self.rect.y += self.velocity[1]
-
-    def bounce(self):
-        self.velocity[0] = self.velocity[0]
-        self.velocity[1] = -self.velocity[1]
+#define game variables
+cols = 6
+rows = 6
+clock = pygame.time.Clock()
+fps = 60
 
 
-ball = Ball(colors["White"], 10, 10)
-ball.rect.x = s_width // 2 - 5
-ball.rect.y = s_height // 2 - 5
+#creating the player
+class player():
+    def __init__(self):
+        self.height = 13
+        self.width = 52
+        self.x = int((s_width / 2) - (self.width / 2))
+        self.y = 760
+        self.speed = 10
+        self.rect = Rect(self.x, self.y, self.width, self.height)
+        self.direction = 0
 
-all_sprites_list.add(ball)
 
+    def move(self):
+        #reset movement direction
+        self.direction = 0
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.speed
+            self.direction = -1
+        if key[pygame.K_RIGHT] and self.rect.right < s_width:
+            self.rect.x += self.speed
+            self.direction = 1
+
+    def draw(self):
+        pygame.draw.rect(screen, color, self.rect)
+
+player_paddle = player()
+
+#Creating the ball
+class game_ball():
+    def __init__(self, x, y):
+        self.ball_rad = 10
+        self.x = x - self.ball_rad
+        self.y = y
+        self.rect = Rect(self.x, self.y, self.ball_rad * 2, self.ball_rad * 2)
+        self.speed_x = 4
+        self.speed_y = -4
+        self.game_over = 0
+
+
+    def move(self):
+
+        #check for collision with walls
+        if self.rect.left < 0 or self.rect.right > screen_width:
+            self.speed_x *= -1
+
+        #check for collision with top and bottom of the screen
+        if self.rect.top < 0:
+            self.speed_y *= -1
+        if self.rect.bottom > screen_height:
+            self.game_over = -1
+
+
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+
+        return self.game_over
+
+
+    def draw(self):
+        pygame.draw.circle(screen, (255,255,255),(375,300), 10)
+
+ball = game_ball(player_paddle.x + (player_paddle.width // 2), player_paddle.y - player_paddle.height)
 
 def main_game():
     while True:
+        clock.tick(fps)
+    
+        screen.fill((0,0,0))
 
-        global player_x
-        global player_y
+        #draw player
+        player_paddle.draw()
+        player_paddle.move()
 
-        screen.fill((0, 0, 0))
+        #draw ball
+        ball.draw()
 
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 exit()
-
-        pygame.draw.rect(
-            screen, colors["Blue"], (player_x, player_y, p_height, p_width))
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] and player_x > 10:
-            player_x = player_x - 5
-        if keys[pygame.K_RIGHT] and player_x < 686:
-            player_x = player_x + 5
-
+                
         pygame.draw.line(screen, colors["Grey"], [0, 19], [s_width, 19], 40)
         pygame.draw.line(
             screen,
